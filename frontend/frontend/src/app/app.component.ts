@@ -1,16 +1,21 @@
-import { Component } from '@angular/core';
+import { Component } from "@angular/core";
+import { HeaderComponent } from "./components/header.component";
+import { NavigationComponent } from "./components/navigation.component";
+import { RouterOutlet } from "@angular/router";
 
 @Component({
-  selector: 'app-root',
+  standalone: true,
+  selector: "app-root",
   template: `
-    <!--The content below is only a placeholder and can be replaced.-->
-    <div style="text-align:center" class="content">
-      <h1>Welcome to {{title}}! </h1>
-      <p> if you didn't know two plus two is {{ 2 + 2 }} </p> 
-     
+    <div class="container mx-auto">
+      <app-header />
+      <app-navigation />
+      <main>
+        <router-outlet />
+      </main>
+    </div>
   `,
-  styles: []
+  styles: [],
+  imports: [HeaderComponent, NavigationComponent, RouterOutlet],
 })
-export class AppComponent {
-  title = 'frontend';
-}
+export class AppComponent {}

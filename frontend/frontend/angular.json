@@ -1,6 +1,14 @@
 {
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
+  "schematics": {
+    "@schematics/angular": {
+      "component": {
+        "flat": true,
+        "standalone": true
+      }
+    }
+  },
   "newProjectRoot": "projects",
   "projects": {
     "frontend": {
@@ -100,11 +108,23 @@
           "options": {
             "browserTarget": "frontend:build"
           }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html"
+            ]
+          }
         }
       }
     }
   },
   "cli": {
-    "analytics": "3e449357-23bc-472f-a8c0-a16b7a9e760b"
+    "analytics": "3e449357-23bc-472f-a8c0-a16b7a9e760b",
+    "schematicCollections": [
+      "@angular-eslint/schematics"
+    ]
   }
 }
