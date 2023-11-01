@@ -8,6 +8,9 @@ import { CounterFeature } from "./state/counter";
 import { CounterEffects } from "./state/counter.effects";
 import { provideEffects } from "@ngrx/effects";
 import { provideHttpClient } from "@angular/common/http";
+import { CounterEffects } from "./state/counter.effects";
+import { provideEffects } from "@ngrx/effects";
+import { provideHttpClient } from "@angular/common/http";
 import { authconfig } from "./state/auth.config";
 import { provideAuth } from "angular-auth-oidc-client";
 
