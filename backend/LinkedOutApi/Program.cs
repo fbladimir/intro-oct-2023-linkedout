@@ -1,70 +1,44 @@
-using LinkedOutApi;
 using Marten;
+using System.Security.Claims;
 
+namespace LinkedOutApi;
 
-var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-builder.Services.AddCors(builder => // "Promiscuous Mode"
+public class UserService
 {
-    builder.AddDefaultPolicy(pol =>
+    private readonly IHttpContextAccessor _contextAccessor;
+    private readonly IDocumentSession _documentSession;
+
+    public UserService(IHttpContextAccessor contextAccessor, IDocumentSession documentSession)
     {
-        pol.AllowAnyOrigin();
-        pol.AllowAnyMethod();
-        pol.AllowAnyHeader();
-    });
-});
+        _contextAccessor = contextAccessor;
+        _documentSession = documentSession;
+    }
 
-var connectionString = builder.Configuration.GetConnectionString("database") ?? throw new Exception("We need a database");
+    public async Task<Guid> GetUserIdAsync()
+    {
+        // a "map" from the subject to a user id for us.
+        var sub = _contextAccessor.HttpContext?.User.Claims.SingleOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+        if (sub is null)
+        {
+            throw new Exception("User Service Can only be used in authenticated endpoints");
+        }
 
-builder.Services.AddMarten(options =>
-{
-    options.Connection(connectionString);
-}).UseLightweightSessions();
+        // see if we already "know" this person.
+        var user = await _documentSession.Query<User>().SingleOrDefaultAsync(u => u.Sub == sub.Value);
+        // if they have, we will return their "local" user Id (Guid)
+        if (user is not null)
+        {
+            return user.Id;
+        }
+        else
+        {
+            var newUser = new User(Guid.NewGuid(), sub.Value);
+            _documentSession.Store(newUser);
+            await _documentSession.SaveChangesAsync();
+            return newUser.Id;
+        }
 
-builder.Services.AddScoped<UserService>();
-var app = builder.Build();
-
-
-app.UseCors();
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    }
 }
 
-app.MapPost("/user/counter", async (CounterRequest request,
-    IDocumentSession session,
-    UserService user) =>
-{
-    var userId = await user.GetUserId();
-    var doc = new UserCounter(userId, request.Current, request.By);
-    session.Store(doc);
-    await session.SaveChangesAsync();
-    return Results.Ok(doc);
-});
-
-app.MapGet("/user/counter", async (IDocumentSession session, UserService user) =>
-{
-    var userId = await user.GetUserId();
-    var doc = await session.Query<UserCounter>().SingleOrDefaultAsync(u => u.Id == userId);
-    if (doc is null)
-    {
-        return Results.NotFound();
-    }
-    else
-    {
-        return Results.Ok(doc);
-    }
-});
-
-app.Run();
-
-
-public record CounterRequest(int Current, int By);
-public record UserCounter(Guid Id, int Current, int By);
+public record User(Guid Id, string Sub);
