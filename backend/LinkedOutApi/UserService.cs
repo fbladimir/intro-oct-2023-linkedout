@@ -14,9 +14,10 @@ public class UserService
         _documentSession = documentSession;
     }
 
-    public async Task<Guid> GetUserIdAsync()
+    public async Task<Guid> GetUserIdAsync(CancellationToken token)
     {
         // a "map" from the subject to a user id for us.
+        // "Barbara"
         var sub = _contextAccessor.HttpContext?.User.Claims.SingleOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
         if (sub is null)
         {
@@ -24,7 +25,7 @@ public class UserService
         }
 
         // see if we already "know" this person.
-        var user = await _documentSession.Query<User>().SingleOrDefaultAsync(u => u.Sub == sub.Value);
+        var user = await _documentSession.Query<User>().SingleOrDefaultAsync(u => u.Sub == sub.Value, token);
         // if they have, we will return their "local" user Id (Guid)
         if (user is not null)
         {
@@ -34,7 +35,7 @@ public class UserService
         {
             var newUser = new User(Guid.NewGuid(), sub.Value);
             _documentSession.Store(newUser);
-            await _documentSession.SaveChangesAsync();
+            await _documentSession.SaveChangesAsync(token);
             return newUser.Id;
         }
 
