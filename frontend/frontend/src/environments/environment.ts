@@ -1,4 +1,4 @@
 export const environment = {
-    apiUrl: "??",
-    authAuthority: "??",
-  };
+  apiUrl: "??",
+  authAuthority: "??",
+};
